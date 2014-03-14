@@ -242,8 +242,94 @@ void supprimer_aretes(const int nb_villes, double **T)
   free(T);
 }
 
+/**
+ * Fonction de comparaison de villes et chemins
+ *
+ * @param [ville] ville à vérifier
+ * @param [chemin_courant] pointeur vers le chemin à verifier
+ * @return faux(1) si ville est présente dans chemin
+ */
+int est_dans_chemin(int ville,t_cycle *chemin_courant)
+{
+	int resultat = 0;
+  for (int k=0;k<chemin_courant->taille;k++)
+  {
+	  if (ville == chemin_courant->c[k])
+	  {
+		  resultat = 1;
+		  return resultat;
+	  }
+  }
+  return resultat;
+}
 
+/**
+ * Fonction de remplacement de deux chemins (cycles)
+ *
+ * @param [chemin_a_remplacer]
+ * @param [chemin_a_copier]
+ */
+void remplacement_tcycles(t_cycle* chemin_a_remplacer, t_cycle* chemin_a_copier)
+{
+	chemin_a_remplacer->poids=chemin_a_copier->poids;
+	chemin_a_remplacer->taille=chemin_a_copier->taille;
+	for (int k=0;k<chemin_a_copier->taille;k++)
+	{
+		chemin_a_remplacer->c[k]=chemin_a_copier->c[k];
+	}
+}
 
+/**
+ * Fonction d'ajout de ville
+ *
+ * @param [ville] ville a ajouter
+ * @param [chemin] chemin de destination
+ * @param [dist] tableau de distances
+ */
+void ajouter_ville(int ville, t_cycle *chemin, double *** dist)
+{
+	 // distance entre la dernière ville du chemin et la prochaine ville a ajouter
+	chemin->poids+=dist[chemin->c[(chemin->taille)-1]][ville];
+	 // augmenter la taille du tableau puis rajouter la ville
+	chemin->c[(chemin->taille)]=ville;
+	chemin->taille++;
+}
+
+/**
+ * Fonction de retrait
+ *
+ * @param [ville] ville a retirer
+ * @param [chemin] chemin de destination
+ * @param [dist] tableau de distances
+ */
+void retirer_ville(int ville, t_cycle *chemin, double *** dist)
+{
+	 // distance entre la dernière ville du chemin et la prochaine ville a retirer
+	chemin->poids-=dist[chemin->c[(chemin->taille)-1]][ville];
+	 // reduire la taille du tableau puis retirer la ville
+	chemin->c[(chemin->taille)]=0;
+	chemin->taille--;
+}
+
+void PVC_EXACT_NAIF(int nb_villes, double *** dist, t_cycle* chemin, t_cycle* meilleur)
+{
+	if (chemin->taille == nb_villes)
+	{
+		if (chemin->poids < meilleur->poids)
+		{
+			remplacement_tcycles(meilleur,chemin);
+		}
+	}
+	else
+	{
+		for (int ville = 0; ville<nb_villes; ville ++)
+		{
+			ajouter_ville(ville,chemin,dist);
+			PVC_EXACT_NAIF(nb_villes,dist,chemin,meilleur);
+			retirer_ville(ville,chemin,dist);
+		}
+	}
+}
 
 /**
  * Fonction main.
