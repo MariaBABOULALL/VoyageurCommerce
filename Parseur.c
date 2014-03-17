@@ -311,6 +311,14 @@ void retirer_ville(int ville, t_cycle *chemin, double *** dist)
 	chemin->taille--;
 }
 
+/**
+ * Fonction d'algorithme NAIF'
+ *
+ * @param [nb_villes] nombre de villes a traiter
+ * @param [chemin] pointeur sur le chemin de destination
+ * @param [meilleur] pointeur vers le meilleur chemin disponible
+ * @param [dist] tableau de distances
+ */
 void PVC_EXACT_NAIF(int nb_villes, double *** dist, t_cycle* chemin, t_cycle* meilleur)
 {
 	if (chemin->taille == nb_villes)
@@ -360,11 +368,15 @@ int main (int argc, char *argv[])
   //afficher_distances(nb_villes,distances);
 
   //naif
+  const int nb_villes = 5;
   t_cycle cycle;
-  cycle.taille=3;
-  cycle.c[0]=0;
-  cycle.c[1]=1;
-  cycle.c[2]=2;
+  cycle.taille=1;
+  cycle.c[0]=0; // Initialisation du chemin
+  t_cycle meilleur_cycle;
+  meilleur_cycle.taille = nb_villes;
+  meilleur_cycle.poids = 10000001000;
+  PVC_EXACT_NAIF ( 5, &distances, &cycle, &)
+
   afficher_cycle_html(cycle, abscisses, ordonnees);
 
   double ** Aretes =  trier_aretes(nb_villes, distances);
