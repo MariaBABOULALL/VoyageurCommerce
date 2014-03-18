@@ -252,7 +252,8 @@ void supprimer_aretes(const int nb_villes, double **T)
 int est_dans_chemin(int ville,t_cycle *chemin_courant)
 {
 	int resultat = 0;
-  for (int k=0;k<chemin_courant->taille;k++)
+	int k=0;
+  for (k;k<(chemin_courant->taille);k++)
   {
 	  if (ville == chemin_courant->c[k])
 	  {
@@ -273,7 +274,8 @@ void remplacement_tcycles(t_cycle* chemin_a_remplacer, t_cycle* chemin_a_copier)
 {
 	chemin_a_remplacer->poids=chemin_a_copier->poids;
 	chemin_a_remplacer->taille=chemin_a_copier->taille;
-	for (int k=0;k<chemin_a_copier->taille;k++)
+	int k=0;
+	for (k;k<(chemin_a_copier->taille);k++)
 	{
 		chemin_a_remplacer->c[k]=chemin_a_copier->c[k];
 	}
@@ -289,7 +291,7 @@ void remplacement_tcycles(t_cycle* chemin_a_remplacer, t_cycle* chemin_a_copier)
 void ajouter_ville(int ville, t_cycle *chemin, double *** dist)
 {
 	 // distance entre la dernière ville du chemin et la prochaine ville a ajouter
-	chemin->poids+=dist[chemin->c[(chemin->taille)-1]][ville];
+	chemin->poids += (*dist)[chemin->c[(chemin->taille)-1]][ville];
 	 // augmenter la taille du tableau puis rajouter la ville
 	chemin->c[(chemin->taille)]=ville;
 	chemin->taille++;
@@ -305,7 +307,7 @@ void ajouter_ville(int ville, t_cycle *chemin, double *** dist)
 void retirer_ville(int ville, t_cycle *chemin, double *** dist)
 {
 	 // distance entre la dernière ville du chemin et la prochaine ville a retirer
-	chemin->poids-=dist[chemin->c[(chemin->taille)-1]][ville];
+	chemin->poids -= (*dist)[chemin->c[(chemin->taille)-2]][ville];
 	 // reduire la taille du tableau puis retirer la ville
 	chemin->c[(chemin->taille)]=0;
 	chemin->taille--;
@@ -319,25 +321,83 @@ void retirer_ville(int ville, t_cycle *chemin, double *** dist)
  * @param [meilleur] pointeur vers le meilleur chemin disponible
  * @param [dist] tableau de distances
  */
+ static int inc = 0;
 void PVC_EXACT_NAIF(int nb_villes, double *** dist, t_cycle* chemin, t_cycle* meilleur)
 {
 	if (chemin->taille == nb_villes)
-	{
+	{	inc++;
+		printf("je teste le cycle %i \n",inc);
+		//On Ajoute le chemin entre la premiere et la derniere
+		chemin->poids += (*dist)[chemin->c[(chemin->taille)-1]][chemin->c[0]];
 		if (chemin->poids < meilleur->poids)
 		{
 			remplacement_tcycles(meilleur,chemin);
 		}
+		//On retire la derniere ville
+		chemin->poids -= (*dist)[chemin->c[(chemin->taille)-1]][chemin->c[0]];
 	}
 	else
-	{
-		for (int ville = 0; ville<nb_villes; ville ++)
+	{	
+		int ville = 0;
+		for (ville; ville < nb_villes; ville++) 
 		{
-			ajouter_ville(ville,chemin,dist);
-			PVC_EXACT_NAIF(nb_villes,dist,chemin,meilleur);
-			retirer_ville(ville,chemin,dist);
+			if (est_dans_chemin(ville,chemin) != 1)
+			{
+				ajouter_ville(ville,chemin,dist);
+				PVC_EXACT_NAIF(nb_villes,dist,chemin,meilleur);
+				retirer_ville(ville,chemin,dist);
+			}
 		}
 	}
 }
+
+/**
+ * Fonction d'algorithme BRANCH & BOUND
+ *
+ * @param [nb_villes] nombre de villes a traiter
+ * @param [chemin] pointeur sur le chemin de destination
+ * @param [meilleur] pointeur vers le meilleur chemin disponible
+ * @param [dist] tableau de distances
+ */
+ static int incb =0;
+void PVC_EXACT_BRANCH_AND_BOUND(int nb_villes, double *** dist, t_cycle* chemin, t_cycle* meilleur)
+{
+	if (chemin->taille == nb_villes)
+	{
+		incb++;
+		printf("je teste le cycle %i \n",incb);
+		//On Ajoute le chemin entre la premiere et la derniere
+		chemin->poids += (*dist)[chemin->c[(chemin->taille)-1]][chemin->c[0]];
+		if (chemin->poids < meilleur->poids)
+		{
+			remplacement_tcycles(meilleur,chemin);
+		}
+		//On retire la derniere ville
+		chemin->poids -= (*dist)[chemin->c[(chemin->taille)-1]][chemin->c[0]];
+	}
+	else
+	{	
+		int ville = 0;
+		for (ville; ville<nb_villes; ville ++)
+		{
+			if (est_dans_chemin(ville,chemin) != 1)
+			{
+				ajouter_ville(ville,chemin,dist);
+				if (chemin->poids < meilleur->poids)
+				{
+				PVC_EXACT_BRANCH_AND_BOUND(nb_villes,dist,chemin,meilleur);
+				}
+				retirer_ville(ville,chemin,dist);
+			}
+		}
+	}
+}
+
+void PVC_APPROCHE_PPV ( int ville_actuelle)
+{
+	
+}
+
 
 /**
  * Fonction main.
@@ -368,16 +428,25 @@ int main (int argc, char *argv[])
   //afficher_distances(nb_villes,distances);
 
   //naif
-  const int nb_villes = 5;
-  t_cycle cycle;
-  cycle.taille=1;
-  cycle.c[0]=0; // Initialisation du chemin
+  const int villes_a_traiter = 10;
+  t_cycle cycle_NAIF;
+  cycle_NAIF.taille=1;
+  cycle_NAIF.c[0]=0; // Initialisation du chemin
   t_cycle meilleur_cycle;
-  meilleur_cycle.taille = nb_villes;
-  meilleur_cycle.poids = 10000001000;
-  PVC_EXACT_NAIF ( 5, &distances, &cycle, &)
+  meilleur_cycle.taille = villes_a_traiter;
+  meilleur_cycle.poids = 101000;
+  PVC_EXACT_NAIF (villes_a_traiter, &distances, &cycle_NAIF, &meilleur_cycle);
 
-  afficher_cycle_html(cycle, abscisses, ordonnees);
+  //afficher_cycle_html(meilleur_cycle, abscisses, ordonnees);
+  printf("BNB \n");
+  //B&B
+  t_cycle cycle_BNB;
+  cycle_BNB.taille=1;
+  cycle_BNB.c[0]=0; 
+  PVC_EXACT_BRANCH_AND_BOUND(villes_a_traiter,&distances,&cycle_BNB,&meilleur_cycle);
+  
+  //afficher_cycle_html(meilleur_cycle, abscisses, ordonnees);
+  
 
   double ** Aretes =  trier_aretes(nb_villes, distances);
   /// <-- Kruskal Here
