@@ -393,10 +393,70 @@ void PVC_EXACT_BRANCH_AND_BOUND(int nb_villes, double *** dist, t_cycle* chemin,
 	}
 }
 
-void PVC_APPROCHE_PPV ( int ville_actuelle)
+/**
+ * Fonction d'algorithme PPV
+ *
+ * @param [nb_villes] nombre de villes a traiter
+ * @param [chemin] pointeur sur le chemin de destination
+ * @param [meilleur] pointeur vers le meilleur chemin disponible
+ * @param [dist] tableau de distances
+ */
+void PVC_APPROCHE_PPV ( int nb_villes, double *** dist,t_cycle* chemin, t_cycle* meilleur)
 {
-	
+	if (chemin->taille == nb_villes)
+	{
+		incb++;
+		printf("je teste le cycle %i \n",incb);
+		//On Ajoute le chemin entre la premiere et la derniere
+		chemin->poids += (*dist)[chemin->c[(chemin->taille)-1]][chemin->c[0]];
+		if (chemin->poids < meilleur->poids)
+		{
+			remplacement_tcycles(meilleur,chemin);
+		}
+		//On retire la derniere ville
+		chemin->poids -= (*dist)[chemin->c[(chemin->taille)-1]][chemin->c[0]];
+	}
+	else
+	{	
+		printf("je teste les villes %i \n",incb++);
+		int ville = 0;
+		int meilleur_ville = 0;
+		double meilleur_distance = 1000000;
+		for (ville; ville<nb_villes; ville ++)
+		{
+			if (est_dans_chemin(ville,chemin) != 1)
+			{
+				double distance_actuelle = (*dist)[chemin->c[(chemin->taille)-1]][ville];
+				if (distance_actuelle<meilleur_distance)
+				{
+				meilleur_ville = ville;
+				meilleur_distance = distance_actuelle;
+				}
+			}
+		}
+		ajouter_ville(meilleur_ville,chemin,dist);
+		if (chemin->poids < meilleur->poids)
+		{
+		PVC_APPROCHE_PPV(nb_villes,dist,chemin,meilleur);
+		}
+		retirer_ville(ville,chemin,dist);
+	}
 }
+
+/**
+ * Fonction d'algorithme ACM
+ *
+ * @param [nb_villes] nombre de villes a traiter
+ * @param [chemin] pointeur sur le chemin de destination
+ * @param [meilleur] pointeur vers le meilleur chemin disponible
+ * @param [dist] tableau de distances
+ */
+ void CALCUL_ACM()
+ {
+ 
+ }
+
+
 
 
 /**
@@ -436,17 +496,23 @@ int main (int argc, char *argv[])
   meilleur_cycle.taille = villes_a_traiter;
   meilleur_cycle.poids = 101000;
   PVC_EXACT_NAIF (villes_a_traiter, &distances, &cycle_NAIF, &meilleur_cycle);
-
   //afficher_cycle_html(meilleur_cycle, abscisses, ordonnees);
+  
   printf("BNB \n");
   //B&B
   t_cycle cycle_BNB;
   cycle_BNB.taille=1;
   cycle_BNB.c[0]=0; 
-  PVC_EXACT_BRANCH_AND_BOUND(villes_a_traiter,&distances,&cycle_BNB,&meilleur_cycle);
-  
+  //PVC_EXACT_BRANCH_AND_BOUND(villes_a_traiter,&distances,&cycle_BNB,&meilleur_cycle);
   //afficher_cycle_html(meilleur_cycle, abscisses, ordonnees);
   
+  printf("PPV \n");
+  //APPROCHE POLYNOMIALE
+  t_cycle cycle_PPV;
+  cycle_PPV.taille=1;
+  cycle_PPV.c[0]=0; 
+  PVC_APPROCHE_PPV(villes_a_traiter,&distances,&cycle_PPV,&meilleur_cycle);
+  afficher_cycle_html(meilleur_cycle, abscisses, ordonnees);
 
   double ** Aretes =  trier_aretes(nb_villes, distances);
   /// <-- Kruskal Here
